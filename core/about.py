@@ -26,5 +26,5 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "关于"))
-        self.label.setText(_translate("Dialog", "<a href='https://www.baidu.com'>TQSoftwareDownloader</a>"))
+        self.label.setText(_translate("Dialog", "<a href='https://github.com/command200/TQSoftwareDownloader'>TQSoftwareDownloader</a>"))
         self.label.setOpenExternalLinks(True)
