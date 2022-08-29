@@ -24,4 +24,4 @@
           ["企业微信", 1, "腾讯"],
           ["WPS", 1, "腾讯"], 
 
-#该项目有部分代码是参考https://github.com/lighterEB/SoftwareDownloader    修改
+#该项目有部分代码是参考https://github.com/lighterEB/SoftwareDownloader   修改
