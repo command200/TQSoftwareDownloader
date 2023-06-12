@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import json
 import os
 import re
 
@@ -469,10 +469,11 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         self.cleantableWidget_2()
         # 搜索词 ，第几行，什么软件库
         DeRecommendList = [["QQ", 1, "腾讯"],
-                           ["360安全卫士", 1, "360"],
                            ["微信", 1, "腾讯"],
+                           ["钉钉", 1, "腾讯"],
                            ["企业微信", 1, "腾讯"],
-                           ["WPS", 1, "腾讯"], ]
+                           ["火绒", "https://huorong.cn/5.0.version.json", "火绒"],
+                           ]
 
         try:
             application_path = os.path.dirname(__file__)
@@ -662,6 +663,66 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.deleteButton.clicked.connect(self.deleteClicked)
 
                 name = QtWidgets.QTableWidgetItem(info['url'])
+                name.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
+                self.tableWidget_2.setItem(row_count, 7, name)
+                # 数量
+                MainWin.table2num += 1
+            else:
+
+                # 设置单元格项目并且全部不可点击
+                name = QtWidgets.QTableWidgetItem()
+                name.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
+                if "http" in lis[1]:
+                    dUrl = lis[1].replace("\"","")
+                else:
+                    dUrl = "无效链接"
+                if lis[2] == "火绒":
+                    res1 = requests.get(lis[1])
+                    dUrl = json.loads(res1.text)["urlAll"]
+                sou = QtWidgets.QTableWidgetItem(lis[2])
+                sou.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
+
+                # print(info)
+                # 生成一行
+                row_count = self.tableWidget_2.rowCount()  # 返回当前行数(尾部)
+                self.tableWidget_2.insertRow(row_count)  # 尾部插入一行
+
+                # 创建窗口对象
+                self.headWidget = QtWidgets.QWidget()
+                # 创建图像标签对象
+                self.imgLabel = QtWidgets.QLabel()
+                # 将解析的logo片放入图像标签
+                self.imgLabel.setScaledContents(True)
+               # self.imgLabel.setPixmap(info['img'])
+                # 创建文字标签
+                self.textLabel = QtWidgets.QLabel()
+                # 设置应用名称到文字标签
+                self.textLabel.setText(lis[0])
+                # 创建水平布局，讲窗口对象放进此布局
+                self.hLayout = QtWidgets.QHBoxLayout(self.headWidget)
+                # 将图像标签放入窗口对象所在布局并设置居中
+                self.hLayout.addWidget(self.imgLabel, 0, QtCore.Qt.AlignCenter)
+                # 将文字标签放入窗口对象所在布局
+                self.hLayout.addWidget(self.textLabel)
+                # 将窗口对象添加到每行第一个单元格
+                self.tableWidget_2.setCellWidget(row_count, 0, self.headWidget)
+                # 设置单元格高度
+                self.tableWidget_2.setRowHeight(row_count, 70)
+
+                for i in range(1, 6):
+                    name = QtWidgets.QTableWidgetItem("")
+                    name.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
+                    self.tableWidget_2.setItem(row_count, i, name)
+                self.deleteButton = QtWidgets.QPushButton()
+                self.deleteButton.setText("删除")
+                font = QFont()
+                font.setPointSize(20)
+                self.deleteButton.setFont(font)
+                self.deleteButton.setStyleSheet("background-color: #e74f4f")
+                self.tableWidget_2.setCellWidget(row_count, 6, self.deleteButton)
+                self.deleteButton.clicked.connect(self.deleteClicked)
+
+                name = QtWidgets.QTableWidgetItem(dUrl)
                 name.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
                 self.tableWidget_2.setItem(row_count, 7, name)
                 # 数量
