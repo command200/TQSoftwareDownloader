@@ -10,10 +10,12 @@ class Tencent:
         res = requests.get(self.url)
         info = res.content.decode(encoding='utf-8')
         info = re.sub(r'\\', '', eval("'{}'".format(info)))
+        #print(info)
         # 总共找到的软件数量
         self.total = re.findall(re.compile(r'"total":(\d+)'), info)
         # 应用名
         dname = re.findall(re.compile(r'"SoftName":"(.*?)",'), info)
+        #print(dname)
         # 软件版本
         version = re.findall(re.compile(r'versionname>(.*?)<'), info)
         # 系统位数
@@ -34,6 +36,7 @@ class Tencent:
         point = re.findall(re.compile(r'point>(.*?)<'), info)
         # 下载地址
         dUrl_old = (re.findall(re.compile(r'(http[s]?://.*)]]'), info))
+        #print(dUrl_old)
         dUrl = []
         for i in range(len(dUrl_old)):
             if len(dUrl) == 0:
@@ -47,8 +50,11 @@ class Tencent:
             for j in range(int(self.total[0])):
                 box = []
                 for i in dname, version, osbit, filesize, publishdate, feature_new, point, dUrl, filename, logo:
-                    box.append(i[j])
-                    self.data[j] = box
+                    try:
+                        box.append(i[j])
+                        self.data[j] = box
+                    except:
+                        continue
         return self.data, self.total
 
 # 360软件库
