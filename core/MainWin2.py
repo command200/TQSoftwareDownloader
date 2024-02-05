@@ -8,11 +8,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QApplication, QAction, QDialog
 
+import Main
 from core import func
 
 import sys
 import requests
 import time
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED, as_completed
 
 
 class Ui_MainWindow(object):
@@ -124,7 +126,7 @@ class Ui_MainWindow(object):
         self.pushButton_5.setGeometry(QtCore.QRect(300, 320, 120, 23))
         self.pushButton_5.setObjectName("pushButton_5")
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
-        self.label_5.setGeometry(QtCore.QRect(740, 325, 141, 21))
+        self.label_5.setGeometry(QtCore.QRect(740, 325, 200, 21))
         font = QtGui.QFont()
         font.setPointSize(11)
         self.label_5.setFont(font)
@@ -134,7 +136,7 @@ class Ui_MainWindow(object):
         self.menubar.setGeometry(QtCore.QRect(0, 0, 950, 23))
         self.menubar.setObjectName("menubar")
         self.menu = QtWidgets.QMenu(self.menubar)
-        #self.menu.setObjectName("menu")
+        # self.menu.setObjectName("menu")
         # self.menu_2 = QtWidgets.QMenu(self.menubar)
         # self.menu_2.setObjectName("menu_2")
         MainWindow.setMenuBar(self.menubar)
@@ -215,7 +217,7 @@ class Ui_MainWindow(object):
         self.pushButton_4.setText(_translate("MainWindow", "推荐软件"))
         self.pushButton_5.setText(_translate("MainWindow", "打开下载目录"))
         self.label_5.setText(_translate("MainWindow", "共添加了0个软件"))
-        #self.menu.setTitle(_translate("MainWindow", "关于"))
+        # self.menu.setTitle(_translate("MainWindow", "关于"))
         self.localfile_action = QAction(MainWindow)
         self.localfile_action.setCheckable(False)
         self.localfile_action.setObjectName('aboutAction')
@@ -237,6 +239,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
     line_2 = ""
     downEnd = 0
     is_done = 0
+    downNum = 0
 
     def __init__(self):
         super(MainWin, self).__init__()
@@ -258,6 +261,12 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_4.clicked.connect(self.clickButton_4)
         # 打开下载目录
         self.pushButton_5.clicked.connect(self.clickButton_5)
+        # 下载对象
+        self.downloadThread = None
+
+    def closeEvent(self, event):
+        DownloadThread.is_exit = 1
+        event.accept()
 
     # 查询软件相关信息功能返回字典
     def searchAppInfo(self):
@@ -367,12 +376,15 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         # print(MainWin.infoBox[0])
         # return
         MainWin.data = {}
-        #print(MainWin.infoBox)
+        # print(MainWin.infoBox)
         if self.tableWidget.item(rowLine, 7).text() == '腾讯':
             photo = QtGui.QPixmap()
-            photo.loadFromData(
-                requests.get("http://pc3.gtimg.com/softmgr/logo/48/{}".format(
-                    MainWin.infoBox[0][rowLine][9].lower())).content)
+            try:
+                photo.loadFromData(
+                    requests.get("http://pc3.gtimg.com/softmgr/logo/48/{}".format(
+                        MainWin.infoBox[0][rowLine][9].lower())).content)
+            except:
+                pass
             MainWin.data['img'] = photo
             # print(MainWin.infoBox[0][rowLine][7])
             MainWin.data['url'] = MainWin.infoBox[0][rowLine][7]
@@ -470,7 +482,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         # 搜索词 ，第几行，什么软件库
         DeRecommendList = [["QQ", 1, "腾讯"],
                            ["微信", 1, "腾讯"],
-                           ["钉钉", 1, "腾讯"],
+                           ["钉钉64位", 1, "360"],
                            ["企业微信", 1, "腾讯"],
                            ["火绒", "https://huorong.cn/5.0.version.json", "火绒"],
                            ]
@@ -479,7 +491,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
             application_path = os.path.dirname(__file__)
             if getattr(sys, 'frozen', False):
                 application_path = os.path.dirname(sys.executable)
-            with open(str(application_path) + "\\推荐列表.ini", "r", encoding='UTF-8')as f:
+            with open(str(application_path) + "\\推荐列表.ini", "r", encoding='UTF-8') as f:
                 res = f.read()
                 pattern = re.compile(
                     r"在下面添加--------------------(.*?)--------------在上面添加",
@@ -673,7 +685,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
                 name = QtWidgets.QTableWidgetItem()
                 name.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
                 if "http" in lis[1]:
-                    dUrl = lis[1].replace("\"","")
+                    dUrl = lis[1].replace("\"", "")
                 else:
                     dUrl = "无效链接"
                 if lis[2] == "火绒":
@@ -693,7 +705,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.imgLabel = QtWidgets.QLabel()
                 # 将解析的logo片放入图像标签
                 self.imgLabel.setScaledContents(True)
-               # self.imgLabel.setPixmap(info['img'])
+                # self.imgLabel.setPixmap(info['img'])
                 # 创建文字标签
                 self.textLabel = QtWidgets.QLabel()
                 # 设置应用名称到文字标签
@@ -762,7 +774,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
             self.pushButton_3.setEnabled(True)
             return
         # 清除已下载
-        #print(self.tableWidget_2.rowCount())
+        # print(self.tableWidget_2.rowCount())
         i = 1
         while i == 1:
             if self.tableWidget_2.rowCount() and self.tableWidget_2.item(0, 4).text() == "下载完成":
@@ -772,7 +784,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
 
         row_count = self.tableWidget_2.rowCount()
         MainWin.table2num = row_count
-        self.label_5.setText("共添加了"+str(MainWin.table2num)+"个软件")
+        self.label_5.setText("共添加了" + str(MainWin.table2num) + "个软件")
         if not row_count:
             self.pushButton_3.setText("一键下载")
             self.pushButton_3.setEnabled(True)
@@ -790,60 +802,88 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         self.downloadThread.start()
 
     def flushValue(self, value):
-            #print(value)
+        # print(value)
 
-            if value[0] == -1:
-                print('done')
-                row_count = self.tableWidget_2.rowCount()
-                print(row_count)
-                self.tableWidget_2.item(row_count-1, 4).setText("下载完成")
-                self.downloadThread.exit(0)
-                MainWin.is_done = 0
-                self.pushButton_3.setText("一键下载")
-                self.pushButton_3.setEnabled(True)
-                QMessageBox.information(self, "通知", "全部下载完毕", QMessageBox.Yes, QMessageBox.Yes)
-                return
+        if value[0] == -1:
+            self.label_5.setText("共添加" + str(MainWin.table2num) + "个软件" + "已完成" + str(MainWin.table2num) + "个")
+            print('done')
+            row_count = self.tableWidget_2.rowCount()
+            print(row_count)
+            self.tableWidget_2.item(row_count - 1, 4).setText("下载完成")
+            self.downloadThread.exit(0)
+            MainWin.is_done = 0
+            MainWin.downNum = 0
+            self.pushButton_3.setText("一键下载")
+            self.pushButton_3.setEnabled(True)
+            QMessageBox.information(self, "通知", "全部下载完毕", QMessageBox.Yes, QMessageBox.Yes)
+            return
 
-            #print(str(value[1]))
-            self.tableWidget_2.item(int(value[0]), 4).setText(str(value[1])+'%')
-            #QApplication.processEvents()
-            if MainWin.is_done != int(value[0]):
-                self.tableWidget_2.item(int(value[0])-1, 4).setText("下载完成")
-            MainWin.is_done = int(value[0])
-
+        if value[1] == -1:
+            self.tableWidget_2.item(value[0], 4).setText("下载完成")
+            MainWin.downNum += 1
+        else:
+            # print(str(value[1]))
+            self.tableWidget_2.item(value[0], 4).setText(str(value[1]) + '%')
+        self.label_5.setText("共添加" + str(MainWin.table2num) + "个软件" + "已完成" + str(MainWin.downNum) + "个")
 
 
 class DownloadThread(QtCore.QThread):
     signal = QtCore.pyqtSignal(list)
+    Drow = -1
+    Durl = ""
+    is_exit = 0
+    pool = ThreadPoolExecutor(max_workers=10)
+
     def run(self):
         data = MainWin.table2list
         MainWin.downEnd = 1
+        DownloadThread.num = len(data)
+        list = []
         for row, url in enumerate(data):
+            list.append([row, url])
+        all_task = [self.pool.submit(self.doDownload, i) for i in list]
+        wait(all_task, timeout=None, return_when=ALL_COMPLETED)
+        print("----complete-----")
+        self.pool.shutdown()
 
-            try:
-                res = requests.get(url, stream=True)
-
-                # 获取文件大小
-                fileSize = res.headers['Content-Length']
-                chunk_size = 102400
-                chunk_temp = 0
-                name = url.split('/')[-1]
-                #print(MainWin.line_2 + "\\" + name)
-                with open(MainWin.line_2 + "\\" + name, 'wb') as f:
-                    for chunk in res.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            temp = "%.2f" % (chunk_temp / float(fileSize) * 100)
-                            f.write(chunk)
-                        chunk_temp += chunk_size
-                        #print([row, temp])
-                        self.signal.emit([row, temp])
-                f.close()
-            except:
-                continue
-            time.sleep(0.5)
         self.signal.emit([-1, 1])
         MainWin.table2list = []
         MainWin.downEnd = 0
+
+    # def handle_exit(self):
+    #     print("用户退出结束所有进程")
+    #     self.pool.shutdown()
+    #     self.exit(0)
+
+    def doDownload(self, val):
+        url = val[1]
+        row = val[0]
+        try:
+            res = requests.get(url, stream=True)
+
+            # 获取文件大小
+            fileSize = res.headers['Content-Length']
+            chunk_size = 102400
+            chunk_temp = 0
+            name = url.split('/')[-1]
+            # print(MainWin.line_2 + "\\" + name)
+            with open(MainWin.line_2 + "\\" + name, 'wb') as f:
+                for chunk in res.iter_content(chunk_size=chunk_size):
+                    if DownloadThread.is_exit == 1:
+                        return
+                    if chunk:
+                        temp = "%.2f" % (chunk_temp / float(fileSize) * 100)
+                        f.write(chunk)
+                    chunk_temp += chunk_size
+                    # print([row, temp])
+                    # DownloadThread.flushValue(DownloadThread(),[row, temp])
+                    self.signal.emit([row, temp])
+            self.signal.emit([row, -1])
+            f.close()
+        except Exception as e:
+            print(e)
+        finally:
+            return
 
 
 class SearchThread(QtCore.QThread):
@@ -885,13 +925,16 @@ class SearchThread(QtCore.QThread):
                 desc = QtWidgets.QTableWidgetItem(item[5])
                 desc.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
                 info[item[5]] = desc
-                #print(item)
+                # print(item)
                 rank = QtWidgets.QTableWidgetItem(str(int(item[6] or 0) / 10) + "分")
                 rank.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
                 info[item[6]] = rank
                 photo = QtGui.QPixmap()
-                photo.loadFromData(
-                    requests.get("http://pc3.gtimg.com/softmgr/logo/48/{}".format(item[9].lower())).content)
+                try:
+                    photo.loadFromData(
+                        requests.get("http://pc3.gtimg.com/softmgr/logo/48/{}".format(item[9].lower())).content)
+                except:
+                    pass
                 info['img'] = photo
                 dUrl = item[7]
                 info['url'] = dUrl
@@ -963,7 +1006,7 @@ class SearchThread(QtCore.QThread):
             # print(MainWin.infoBox[0].items())
             # 创建表格控件中的行数
             # infoBox[1][0] = 查询到的软件总数
-            #self.signalTotal.emit(MainWin.infoBox[1][0])
+            # self.signalTotal.emit(MainWin.infoBox[1][0])
             # 遍历查询到的软件信息
             # print(MainWin.infoBox[0].items())
             for key, item in infoBox[0].items():
@@ -1014,7 +1057,6 @@ class SearchThread(QtCore.QThread):
             # time.sleep(1)
             # MainWin.row = -1
 
-
             # 得到处理后的信息字典
             infobox360 = func.QiHu(MainWin.entryText).getInfo()
             for item in infobox360[0].values():
@@ -1022,7 +1064,7 @@ class SearchThread(QtCore.QThread):
                     mainlist[i] = item
                     i += 1
 
-            MainWin.infoBox = [mainlist, int(infoBox[1][0])+int(infobox360[1])]
+            MainWin.infoBox = [mainlist, int(infoBox[1][0]) + int(infobox360[1])]
             print(MainWin.infoBox)
             box360 = {}
             # self.signalTotal.emit(str(infobox360[1]))

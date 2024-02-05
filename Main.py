@@ -6,11 +6,16 @@ import os
 import ctypes
 
 # auto-py-to-exe
+
+
+
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
     except:
         return False
+
+
 
 if __name__ == '__main__':
     if is_admin():
@@ -21,5 +26,3 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     else:
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
-
-
