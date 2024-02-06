@@ -805,7 +805,8 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         # print(value)
 
         if value[0] == -1:
-            self.label_5.setText("共添加" + str(MainWin.table2num) + "个软件" + "已完成" + str(MainWin.table2num) + "个")
+            self.label_5.setText(
+                "共添加" + str(MainWin.table2num) + "个软件" + "已完成" + str(MainWin.table2num) + "个")
             print('done')
             row_count = self.tableWidget_2.rowCount()
             print(row_count)
@@ -832,7 +833,6 @@ class DownloadThread(QtCore.QThread):
     Drow = -1
     Durl = ""
     is_exit = 0
-    pool = ThreadPoolExecutor(max_workers=10)
 
     def run(self):
         data = MainWin.table2list
@@ -841,10 +841,11 @@ class DownloadThread(QtCore.QThread):
         list = []
         for row, url in enumerate(data):
             list.append([row, url])
-        all_task = [self.pool.submit(self.doDownload, i) for i in list]
+        pool = ThreadPoolExecutor(max_workers=10)
+        all_task = [pool.submit(self.doDownload, i) for i in list]
         wait(all_task, timeout=None, return_when=ALL_COMPLETED)
         print("----complete-----")
-        self.pool.shutdown()
+        pool.shutdown()
 
         self.signal.emit([-1, 1])
         MainWin.table2list = []
