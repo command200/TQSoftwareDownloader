@@ -484,7 +484,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
                            ["微信", 1, "腾讯"],
                            ["钉钉64位", 1, "360"],
                            ["企业微信", 1, "腾讯"],
-                           ["火绒", "https://huorong.cn/5.0.version.json", "火绒"],
+                           ["火绒", "https://www.huorong.cn/product/downloadHr60.php?pro=hr60", "火绒"],
                            ]
 
         try:
@@ -690,7 +690,8 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
                     dUrl = "无效链接"
                 if lis[2] == "火绒":
                     res1 = requests.get(lis[1])
-                    dUrl = json.loads(res1.text)["urlAll"]
+                    # dUrl = json.loads(res1.text)["urlAll"]
+                    dUrl = res1.url
                 sou = QtWidgets.QTableWidgetItem(lis[2])
                 sou.setFlags(QtCore.Qt.ItemFlags(int("000000", 2)))
 
