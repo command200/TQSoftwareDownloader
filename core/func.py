@@ -10,7 +10,8 @@ class Tencent:
         res = requests.get(self.url)
         info = res.content.decode(encoding='utf-8')
         info = re.sub(r'\\', '', eval("'{}'".format(info)))
-        #print(info)
+        print("111111111111111111111111")
+        print(info)
         # 总共找到的软件数量
         self.total = re.findall(re.compile(r'"total":(\d+)'), info)
         # 应用名
@@ -36,7 +37,7 @@ class Tencent:
         point = re.findall(re.compile(r'point>(.*?)<'), info)
         # 下载地址
         dUrl_old = (re.findall(re.compile(r'(http[s]?://.*)]]'), info))
-        #print(dUrl_old)
+        # print(dUrl_old)
         dUrl = []
         for i in range(len(dUrl_old)):
             if len(dUrl) == 0:
